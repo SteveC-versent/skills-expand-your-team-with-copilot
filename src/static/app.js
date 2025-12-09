@@ -519,6 +519,27 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
     `;
 
+    // Create share buttons HTML
+    const shareButtonsHtml = `
+      <div class="share-buttons">
+        <span class="share-label">Share:</span>
+        <button class="share-button facebook" data-activity="${name}" data-platform="facebook" title="Share on Facebook">
+          📘
+        </button>
+        <button class="share-button twitter" data-activity="${name}" data-platform="twitter" title="Share on Twitter/X">
+          🐦
+        </button>
+        <button class="share-button email" data-activity="${name}" data-platform="email" title="Share via Email">
+          ✉️
+        </button>
+        ${
+          navigator.share
+            ? `<button class="share-button native" data-activity="${name}" data-platform="native" title="Share">📤</button>`
+            : ""
+        }
+      </div>
+    `;
+
     activityCard.innerHTML = `
       ${tagHtml}
       <h4>${name}</h4>
@@ -528,6 +549,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <span class="tooltip-text">Regular meetings at this time throughout the semester</span>
       </p>
       ${capacityIndicator}
+      ${shareButtonsHtml}
       <div class="participants-list">
         <h5>Current Participants:</h5>
         <ul>
@@ -575,6 +597,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const deleteButtons = activityCard.querySelectorAll(".delete-participant");
     deleteButtons.forEach((button) => {
       button.addEventListener("click", handleUnregister);
+    });
+
+    // Add click handlers for share buttons
+    const shareButtons = activityCard.querySelectorAll(".share-button");
+    shareButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const activityName = button.dataset.activity;
+        const platform = button.dataset.platform;
+        handleShare(activityName, details, platform);
+      });
     });
 
     // Add click handler for register button (only when authenticated)
@@ -797,6 +829,72 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
     );
+  }
+
+  // Handle social sharing
+  function handleShare(activityName, details, platform) {
+    const currentUrl = window.location.href.split("?")[0];
+    const shareUrl = `${currentUrl}?activity=${encodeURIComponent(
+      activityName
+    )}`;
+    const shareText = `Check out ${activityName} at Mergington High School! ${details.description}`;
+    const shareTitle = `${activityName} - Mergington High School`;
+
+    switch (platform) {
+      case "facebook":
+        window.open(
+          `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+            shareUrl
+          )}`,
+          "_blank",
+          "width=600,height=400"
+        );
+        break;
+
+      case "twitter":
+        window.open(
+          `https://twitter.com/intent/tweet?url=${encodeURIComponent(
+            shareUrl
+          )}&text=${encodeURIComponent(shareText)}`,
+          "_blank",
+          "width=600,height=400"
+        );
+        break;
+
+      case "email":
+        const emailSubject = encodeURIComponent(shareTitle);
+        const emailBody = encodeURIComponent(
+          `${shareText}\n\nSchedule: ${formatSchedule(
+            details
+          )}\n\nLearn more: ${shareUrl}`
+        );
+        window.location.href = `mailto:?subject=${emailSubject}&body=${emailBody}`;
+        break;
+
+      case "native":
+        // Use native share API if available
+        if (navigator.share) {
+          navigator
+            .share({
+              title: shareTitle,
+              text: shareText,
+              url: shareUrl,
+            })
+            .then(() => {
+              showMessage("Activity shared successfully!", "success");
+            })
+            .catch((error) => {
+              if (error.name !== "AbortError") {
+                console.error("Error sharing:", error);
+                showMessage("Failed to share activity.", "error");
+              }
+            });
+        }
+        break;
+
+      default:
+        console.error("Unknown share platform:", platform);
+    }
   }
 
   // Show message function
