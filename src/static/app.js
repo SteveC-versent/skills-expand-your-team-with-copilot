@@ -833,8 +833,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Handle social sharing
   function handleShare(activityName, details, platform) {
-    const currentUrl = window.location.href.split("?")[0];
-    const shareUrl = `${currentUrl}?activity=${encodeURIComponent(
+    // Construct canonical URL from window.location for security
+    const baseUrl = `${window.location.protocol}//${window.location.host}${window.location.pathname}`;
+    const shareUrl = `${baseUrl}?activity=${encodeURIComponent(
       activityName
     )}`;
     const shareText = `Check out ${activityName} at Mergington High School! ${details.description}`;
@@ -847,7 +848,7 @@ document.addEventListener("DOMContentLoaded", () => {
             shareUrl
           )}`,
           "_blank",
-          "width=600,height=400"
+          "noopener,noreferrer,width=600,height=400"
         );
         break;
 
@@ -857,7 +858,7 @@ document.addEventListener("DOMContentLoaded", () => {
             shareUrl
           )}&text=${encodeURIComponent(shareText)}`,
           "_blank",
-          "width=600,height=400"
+          "noopener,noreferrer,width=600,height=400"
         );
         break;
 
